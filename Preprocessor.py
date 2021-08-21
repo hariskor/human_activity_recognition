@@ -27,7 +27,16 @@ class Pipeline:
 
 
     def read_data(self):
-        print (os.listdir('data/ankle'))
+        ankle = os.listdir('data/ankle')
+        dFrames = []
+
+        ankleTarget = pd.DataFrame()
+
+        for i in range(int(len(ankle)/2)): #half is X half is Y
+            dFrames.append(pd.read_csv('data/ankle/ankle_X_0'+str(i+1)+'.csv'))
+
+        ankleX = pd.concat(dFrames, axis=0, ignore_index=True)
+        print(ankleX.size)
         return
         try:
             data = pd.read_csv("data/ankle/")
