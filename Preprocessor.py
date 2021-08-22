@@ -9,7 +9,7 @@ class Pipeline:
         pass
 
     def pipe(self):
-        self.read_data()
+        x, Y = self.read_data()
         return
         x, y = self.transform_data(rawData)
         x = self.preprοcessing(x)
@@ -28,16 +28,22 @@ class Pipeline:
 
     def read_data(self):
         ankle = os.listdir('data/ankle')
-        dFrames = []
+        dFramesX = []
+        dFramesY = []
 
-        ankleTarget = pd.DataFrame()
 
         for i in range(int(len(ankle)/2)): #half is X half is Y
-            dFrames.append(pd.read_csv('data/ankle/ankle_X_0'+str(i+1)+'.csv'))
+            dFramesX.append( pd.read_csv( 'data/ankle/ankle_X_0'+str( i+1)+'.csv'))
+            dFramesY.append( pd.read_csv( 'data/ankle/ankle_X_0'+str( i+1)+'.csv'))
 
-        ankleX = pd.concat(dFrames, axis=0, ignore_index=True)
-        print(ankleX.size)
-        return
+        ankleX = pd.concat(dFramesX, axis=0, ignore_index=True)
+        ankleY = pd.concat(dFramesY, axis=0, ignore_index=True)
+
+        # print(ankleX.size)
+        # print(ankleY.size)
+
+        return ankleX,ankleY
+
         try:
             data = pd.read_csv("data/ankle/")
         except FileNotFoundError:
