@@ -5,5 +5,5 @@ import matplotlib.pyplot as plt
 import Preprocessor
 
 if __name__ == '__main__':
-    p = Preprocessor.Pipeline()
+    p = Preprocessor.Pipeline(loadPreprocessed=True, saveData=True)
     p.pipe()
