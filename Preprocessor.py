@@ -3,48 +3,69 @@ import pandas as pd
 import sklearn
 import os
 from datetime import datetime, date
+from sklearn.pipeline import Pipeline as Pipe
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import ShuffleSplit
 
 class Pipeline:
 
-    def __init__(self, loadPreprocessed=False, saveData=False):
+    def __init__(self, loadPreprocessed=False, saveData=False, nFolds = 0, model = SVC()):
         self.loadPreprocessed = loadPreprocessed
         self.saveData = saveData
+        self.nFolds = nFolds
+        self.model = self.modelSelector(model)
 
     def pipe(self):
-        x, Y = self.read_data()
+        x, y = self.read_data()
         # print(x.loc[[0]])
-        # print(len(x.index)) 
-        self.transform_data(x, Y)
-        if(self.saveData):
-            self.save_data(x,Y)
-        return
-        x = self.preprοcessing(x,Y)
-        xtrain,ytrain,xtest,ytest = self.split(x,Y)
-        x = self.train(x,Y)
-        x = self.test(x,Y)
-        return x, y
+        # print(len(x.index))
 
-    def split(self, x,Y):
-        xtrain = None
-        ytrain = None
-        xtest = None
-        ytest = None
+        x = self.preprocessing(x, dropTimestamp=False)
+
+        self.transform_data(x, y)
+        if(self.saveData):
+            self.save_data(x,y)
+        # model = self.model
+        # clf = Pipe([('scaler', StandardScaler()), ('model', model)])
+
+        # cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
+        # scores = cross_val_score(clf, x, y, cv = cv)
+        # print(scores)
+        return
+
+    def modelSelector(self, model):
+        if model == 'svm':
+            self.model = SVC()
+
+        return model
+
+    def split(self, x,y):
+        xtrain, xtest, ytrain, ytest = train_test_split(x, y, random_state=0)
         return xtrain,ytrain,xtest,ytest
 
     def save_data(self, x, y):
-        d = datetime.datetime.now().date().strftime("%d/%m/%Y")
-        np.savetxt('./transformed_data/x_'+d+'.csv',x,delimiter=';')
-        np.savetxt('./transformed_data/y_'+d+'.csv',y,delimiter=';')
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+
+        d = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")
+        np.savetxt(dir_path+'/transformed_data/x_'+d+'.csv',x,delimiter=';')
+        np.savetxt(dir_path+'/transformed_data/y_'+d+'.csv',y,delimiter=';')
         return
 
-    def preprocessing(self, x):
+    def preprocessing(self, x,dropTimestamp = True):
+        # get the timestamp and convert it to epoch
+        i = 0
+        while i <= len(x.index):
+            x[i,0] = datetime.strptime(x.loc[i]['Timestamp'], '%Y-%m-%dT%H:%M:%S.%f0').timestamp()
         return x
 
     def transform_data(self, x, Y):
-        x = x.iloc[1:640000]
+        x = x.iloc[1:64000]
         # 240 readings -> 2 seconds of data
         i = 0
-        newDataset = np.zeros(0) #create the new dataset here 
+        newDataset = np.zeros(0) #create the new dataset here
         labels = np.zeros(0) #labels of the new dataset
         count = 0
         while i <= len(x.index):
@@ -60,7 +81,7 @@ class Pipeline:
                     same = False
                     print('false')
                     break
-                
+
             # print(index_continue)
             # print(Y.loc[i + j]['label'])
             if same:
@@ -89,7 +110,7 @@ class Pipeline:
     def preprοcessing(self,x,Y):
         return x
     def read_data(self):
-        
+
         ankle = os.listdir('data/ankle')
         dFramesX = []
         dFramesY = []
@@ -100,6 +121,8 @@ class Pipeline:
 
         ankleX = pd.concat(dFramesX, axis=0, ignore_index=True)
         ankleY = pd.concat(dFramesY, axis=0, ignore_index=True)
+        ankleX = ankleX.iloc[1:64000]
+        ankleY = ankleY.iloc[1:64000]
         # print(ankleX.size)
         # print(ankleY.size)
         return ankleX, ankleY
