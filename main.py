@@ -1,9 +1,8 @@
 import numpy as np
-import sklearn
 import matplotlib.pyplot as plt
 
 import Preprocessor
 
 if __name__ == '__main__':
-    p = Preprocessor.Pipeline(loadPreprocessed=True, saveData=True)
+    p = Preprocessor.Pipeline(loadPreprocessed=True, saveData=True, nFolds = 0)
     p.pipe()
