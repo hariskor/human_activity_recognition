@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import ShuffleSplit
+from sklearn.decomposition import PCA
 
 class Pipeline:
 
@@ -19,17 +20,15 @@ class Pipeline:
         self.model = self.modelSelector(model)
 
     def pipe(self):
-        x, y = self.read_data()
+        model = self.model
+        x, y = self.read_data(trimToLength=60000)
         # print(x.loc[[0]])
         # print(len(x.index))
 
-        x = self.preprocessing(x, dropTimestamp=False)
-
+        x = self.preprocessing(x)
         self.transform_data(x, y)
         if(self.saveData):
             self.save_data(x,y)
-        # model = self.model
-        # clf = Pipe([('scaler', StandardScaler()), ('model', model)])
 
         # cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
         # scores = cross_val_score(clf, x, y, cv = cv)
@@ -40,7 +39,10 @@ class Pipeline:
         if model == 'svm':
             self.model = SVC()
 
-        return model
+        clf = Pipe([('scaler', StandardScaler()),
+            ('reduce_dims', PCA(n_components=4)),
+            ('model', model)])
+        return clf
 
     def split(self, x,y):
         xtrain, xtest, ytrain, ytest = train_test_split(x, y, random_state=0)
@@ -54,21 +56,18 @@ class Pipeline:
         np.savetxt(dir_path+'/transformed_data/y_'+d+'.csv',y,delimiter=';')
         return
 
-    def preprocessing(self, x,dropTimestamp = True):
-        # get the timestamp and convert it to epoch
-        i = 0
-        while i <= len(x.index):
-            x[i,0] = datetime.strptime(x.loc[i]['Timestamp'], '%Y-%m-%dT%H:%M:%S.%f0').timestamp()
+    def preprocessing(self, x):
+        #drop the timestamp. Dataset is already sorted as a timeseries
+        x = x.drop(['Timestamp'], axis=1)
         return x
 
     def transform_data(self, x, Y):
-        x = x.iloc[1:64000]
         # 240 readings -> 2 seconds of data
-        i = 0
+        i = 1
         newDataset = np.zeros(0) #create the new dataset here
         labels = np.zeros(0) #labels of the new dataset
         count = 0
-        while i <= len(x.index):
+        while i < len(x.index):
             datasetNode = np.zeros(0) #temporary variable to store each node of the dataset (240 samples / 2 sec) and push it to newDataset
             index_continue = 0
             same = True  # checks if all of the next 239 nodes of the main dataframe are the same
@@ -88,7 +87,7 @@ class Pipeline:
 
                 datasetNode = np.append(datasetNode, x.iloc[i:i+239].to_numpy()) #create an example with 240 readings of x features
                 # print(datasetNode.shape[0])
-                if(datasetNode.shape[0] == 240*11):
+                if(datasetNode.shape[0] == 240*len(x.columns)):
                     newDataset = np.append(newDataset,datasetNode,axis=0) #append the example to the new dataset                
                     labels = np.append(labels,label)
             else:
@@ -97,7 +96,7 @@ class Pipeline:
                 # continue from i*j index, the node that the label changes
 
             i += 240
-        x = newDataset.reshape(-1,240*11)
+        x = newDataset.reshape(-1,240*len(x.columns))
         print(x.shape)
         print(labels.shape)
         return
@@ -109,7 +108,7 @@ class Pipeline:
 
     def preprοcessing(self,x,Y):
         return x
-    def read_data(self):
+    def read_data(self,trimToLength):
 
         ankle = os.listdir('data/ankle')
         dFramesX = []
@@ -121,10 +120,10 @@ class Pipeline:
 
         ankleX = pd.concat(dFramesX, axis=0, ignore_index=True)
         ankleY = pd.concat(dFramesY, axis=0, ignore_index=True)
-        ankleX = ankleX.iloc[1:64000]
-        ankleY = ankleY.iloc[1:64000]
-        # print(ankleX.size)
-        # print(ankleY.size)
+        if(trimToLength > 0):
+            ankleX = ankleX.iloc[1:trimToLength]
+            ankleY = ankleY.iloc[1:trimToLength]
+
         return ankleX, ankleY
 
         # reference to prev code
