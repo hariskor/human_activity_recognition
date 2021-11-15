@@ -22,6 +22,7 @@ class Pipeline:
     def pipe(self):
         model = self.model
         x, y = self.read_data(trimToLength=60000)
+        print(x.shape)
         # print(x.loc[[0]])
         # print(len(x.index))
 
@@ -29,10 +30,10 @@ class Pipeline:
         self.transform_data(x, y)
         if(self.saveData):
             self.save_data(x,y)
-
-        # cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
-        # scores = cross_val_score(clf, x, y, cv = cv)
-        # print(scores)
+        y = y['label'].to_numpy()
+        cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
+        scores = cross_val_score(model, x, y, cv = cv,n_jobs=-1)
+        print(scores)
         return
 
     def modelSelector(self, model):
@@ -67,19 +68,20 @@ class Pipeline:
         newDataset = np.zeros(0) #create the new dataset here
         labels = np.zeros(0) #labels of the new dataset
         count = 0
-        while i < len(x.index):
+        while i <= len(x.index):
             datasetNode = np.zeros(0) #temporary variable to store each node of the dataset (240 samples / 2 sec) and push it to newDataset
             index_continue = 0
             same = True  # checks if all of the next 239 nodes of the main dataframe are the same
             label = Y.loc[i]['label']
             # print('label',label)
             for j in range(239):
-                index_continue = j+1
-                if not(Y.loc[i + j]['label'] == label): #if next node is not the same label, abandon
+                if(i + j) <= len(x.index):
+                    index_continue = j+1
+                    if not(Y.loc[i + j]['label'] == label): #if next node is not the same label, abandon
 
-                    same = False
-                    print('false')
-                    break
+                        same = False
+                        print('false')
+                        break
 
             # print(index_continue)
             # print(Y.loc[i + j]['label'])
