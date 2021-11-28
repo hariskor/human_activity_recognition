@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit,train_test_split
 from sklearn.decomposition import PCA
 
 class Pipeline:
@@ -31,17 +31,20 @@ class Pipeline:
         if(self.saveData):
             self.save_data(x,y)
         y = y['label'].to_numpy()
-        cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
-        scores = cross_val_score(model, x, y, cv = cv,n_jobs=-1)
+        
+        X_train, X_test, y_train, y_test = train_test_split(x,y,test_size=0.3)
+        
+        # cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
+        scores = cross_val_score(model, x, y, cv = cv,n_jobs=-1, scoring='f1_macro')
         print(scores)
         return
 
     def modelSelector(self, model):
         if model == 'svm':
-            self.model = SVC()
+            self.model = SVC(C=1,kernel='rbf',gamma=0.1)
 
         clf = Pipe([('scaler', StandardScaler()),
-            ('reduce_dims', PCA(n_components=4)),
+            # ('reduce_dims', PCA(n_components=9)),
             ('model', model)])
         return clf
 
@@ -68,15 +71,15 @@ class Pipeline:
         newDataset = np.zeros(0) #create the new dataset here
         labels = np.zeros(0) #labels of the new dataset
         count = 0
-        while i <= len(x.index):
+        while i < len(x.index):
             datasetNode = np.zeros(0) #temporary variable to store each node of the dataset (240 samples / 2 sec) and push it to newDataset
             index_continue = 0
             same = True  # checks if all of the next 239 nodes of the main dataframe are the same
             label = Y.loc[i]['label']
             # print('label',label)
             for j in range(239):
-                if(i + j) <= len(x.index):
-                    index_continue = j+1
+                if(i + j) < len(x.index):
+                    index_continue = j
                     if not(Y.loc[i + j]['label'] == label): #if next node is not the same label, abandon
 
                         same = False
