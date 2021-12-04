@@ -130,20 +130,3 @@ class Pipeline:
             ankleY = ankleY.iloc[1:trimToLength]
 
         return ankleX, ankleY
-
-        # reference to prev code
-        # try:
-        #     data = pd.read_csv("data/ankle/")
-        # except FileNotFoundError:
-        #     print("there is no dataset in ")
-        #     list_subfolders = sorted([f.name for f in os.scandir("data") if
-        #                               f.is_dir()])  # scans the folder "data" to get a list of all subfolders
-        #     # data is the dataframe for all concatenated datasets , initialized with the first crisis data
-        #     data = pd.read_csv("data/" + list_subfolders[0] + "/" + list_subfolders[0] + "-tweets_labeled.csv")
-        #     for i, crisis in enumerate(list_subfolders):
-        #         if i == 0: continue
-        #         crisis_data = pd.read_csv(
-        #             "data/" + list_subfolders[i] + "/" + list_subfolders[i] + "-tweets_labeled.csv")
-        #         data = pd.concat([data, crisis_data], sort=False, ignore_index=True)
-        # return data
-        
