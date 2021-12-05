@@ -1,27 +1,30 @@
 import numpy as np
 import pandas as pd
-import sklearn
 import os
 from datetime import datetime, date
 from sklearn.pipeline import Pipeline as Pipe
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import ShuffleSplit,train_test_split
+from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
-
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import NearestNeighbors
 class Pipeline:
 
-    def __init__(self, loadPreprocessed=False, saveData=False, nFolds = 0, model = SVC()):
+    def __init__(self, loadPreprocessed=False, saveData=False, nFolds = 0, model = 'KNN',trimToLength=60000):
         self.loadPreprocessed = loadPreprocessed
         self.saveData = saveData
         self.nFolds = nFolds
         self.model = self.modelSelector(model)
+        self.trimToLength = trimToLength
 
     def pipe(self):
         model = self.model
-        x, y = self.read_data(trimToLength=60000)
+        x, y = self.read_data(self.trimToLength)
         print(x.shape)
         # print(x.loc[[0]])
         # print(len(x.index))
@@ -35,17 +38,32 @@ class Pipeline:
         X_train, X_test, y_train, y_test = train_test_split(x,y,test_size=0.3)
         
         # cv = ShuffleSplit(n_splits=10, test_size=0.3, random_state=0)
-        scores = cross_val_score(model, x, y, cv = cv,n_jobs=-1, scoring='f1_macro')
-        print(scores)
+        model.fit(X_train, y_train)
+        score = model.score(X_test,y_test)
+        print(score)
+        # y_pred = cross_val_predict(model, x, y, cv=10, n_jobs=-1) #, scoring='f1_macro'
+        # conf_mat = confusion_matrix(y, y_pred)
+        # print (conf_mat)
         return
 
     def modelSelector(self, model):
         if model == 'svm':
-            self.model = SVC(C=1,kernel='rbf',gamma=0.1)
-
-        clf = Pipe([('scaler', StandardScaler()),
+            self.model = SVC(C=1,kernel='rbf',gamma=0.1,max_iter=1000)
+        
+        elif model == 'tree':
+            print('tree selected')
+            self.model = DecisionTreeClassifier(criterion='entropy',max_depth=15)
+        
+        elif model == 'forest':
+            self.model = RandomForestClassifier(criterion = 'entropy',n_jobs=-1)
+        
+        elif model == 'KNN':
+            self.model = NearestNeighbors(n_jobs=-1)
+        clf = Pipe(
+            steps = [('scaler', StandardScaler()),
             # ('reduce_dims', PCA(n_components=9)),
-            ('model', model)])
+            ('model', self.model)],
+            verbose= True)
         return clf
 
     def split(self, x,y):
@@ -53,11 +71,13 @@ class Pipeline:
         return xtrain,ytrain,xtest,ytest
 
     def save_data(self, x, y):
+        print('saving processed data...')
         dir_path = os.path.dirname(os.path.realpath(__file__))
 
         d = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")
-        np.savetxt(dir_path+'/transformed_data/x_'+d+'.csv',x,delimiter=';')
-        np.savetxt(dir_path+'/transformed_data/y_'+d+'.csv',y,delimiter=';')
+        np.savetxt(dir_path+'/transformed_data/x_'+d+'_'+self.trimToLength+'.csv',x,delimiter=';')
+        np.savetxt(dir_path+'/transformed_data/y_'+d+'_'+self.trimToLength+'.csv',y,delimiter=';')
+        print('data saved')
         return
 
     def preprocessing(self, x):
@@ -113,8 +133,9 @@ class Pipeline:
 
     def preprοcessing(self,x,Y):
         return x
-    def read_data(self,trimToLength):
 
+    def read_data(self,trimToLength=0):
+        
         ankle = os.listdir('data/ankle')
         dFramesX = []
         dFramesY = []
