@@ -27,9 +27,11 @@ def read_data(sensor):
         
         return dataX, dataY
 
-# def combine_data(data1x,data1y,data2x,data2y):
-#     #dataset 1 should be the one with the lower frequency
-#     #ankle is 100hz, therefore it comes first
+def combine_data(data1x,data1y,data2x,data2y):
+    
+    return datax,datay
+     #dataset 1 should be the one with the lower frequency
+     #ankle is 100hz, therefore it comes first
 
 
 
@@ -38,10 +40,12 @@ def read_data(sensor):
 
 # print(pd.Timestamp('2020-07-30 12:11:49.117'))
 # print(pd.Timestamp('2020-07-30T12:11:49.3100000'))
-
+print('reading data...')
 ankleX,ankleY = read_data('ankle')
 wristX,wristY = read_data('wrist')
+
 print(ankleX.head())
 print(wristX.head())
-# print('banana')
-# dataX,dataY = combine_data(ankleX,ankleY,wristX,wristY)
+print('')
+print('combining data...')
+dataX,dataY = combine_data(ankleX,ankleY,wristX,wristY)
