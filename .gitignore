@@ -1,2 +1,4 @@
 /data
 __pycache__/Preprocessor.cpython-38.pyc
+/transformed_data
+/combined_data
