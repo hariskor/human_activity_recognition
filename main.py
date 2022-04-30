@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import Preprocessor
+# import Pipeline
+import Ensemble
 
 if __name__ == '__main__':
-    p = Preprocessor.Pipeline(loadPreprocessed=True, saveData=False, nFolds = 0)
+    p = Ensemble.Pipe(loadPreprocessed=False, trimToLength = 100)
     p.pipe()
